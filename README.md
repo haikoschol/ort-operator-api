@@ -7,7 +7,40 @@ This repository contains a HTTP/JSON API, a Matrix chatbot and a (currently brok
 
 ### `GET /runs` - Returns a list of all OrtRun resources
 
+Response:
+
+```json
+{
+  "runs": [
+    {
+      "name": "<name>",
+      "repoUrl": "<repoUrl>",
+      "status": {
+        "analyzer": "[Pending|Running|Succeeded|Failed|Aborted]",
+        "scanner": "[Pending|Running|Succeeded|Failed|Aborted]",
+        "reporter": "[Pending|Running|Succeeded|Failed|Aborted]"
+      }
+    }
+  ]
+}
+```
+
 ### `GET /runs/<name>` - Return the OrtRun resources with the given name
+
+Response:
+
+```json
+{
+  "name": "<name>",
+  "repoUrl": "<repoUrl>",
+  "status": {
+    "analyzer": "[Pending|Running|Succeeded|Failed|Aborted]",
+    "scanner": "[Pending|Running|Succeeded|Failed|Aborted]",
+    "reporter": "[Pending|Running|Succeeded|Failed|Aborted]"
+  },
+  "kubernetesResource": "<yaml>"
+}
+```
 
 ### `POST /runs` - Create a new OrtRun resources
 
@@ -15,11 +48,41 @@ Payload:
 
 ```json
 {
-    "RepoUrl": "https://github.com/haikoschol/cats-of-asia.git"
+    "repoUrl": "https://github.com/haikoschol/cats-of-asia.git"
+}
+```
+
+Response:
+
+```json
+{
+  "name": "<name>",
+  "repoUrl": "<repoUrl>",
+  "status": {
+    "analyzer": "[Pending|Running|Succeeded|Failed|Aborted]",
+    "scanner": "[Pending|Running|Succeeded|Failed|Aborted]",
+    "reporter": "[Pending|Running|Succeeded|Failed|Aborted]"
+  },
+  "kubernetesResource": "<yaml>"
 }
 ```
 
 ### `GET /logs/<name>/[analyzer|scanner|reporter]` - Fetch the logs from the analyzer, scanner or reporter of an ORT run
+
+Response:
+
+```json
+{
+  "name": "<name>",
+  "stage": "[analyzer|scanner|reporter]",
+  "podLogs": [
+    {
+      "podName": "<name>",
+      "podLogs": "<log>"
+    }
+  ]
+}
+```
 
 ## Configuration
 

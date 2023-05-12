@@ -18,7 +18,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -57,7 +56,7 @@ func handleCreateRun(w http.ResponseWriter, r *http.Request, oc ortController) {
 	decoder := json.NewDecoder(r.Body)
 
 	payload := struct {
-		RepoUrl string
+		RepoUrl string `json:"repoUrl"`
 	}{}
 
 	if err := decoder.Decode(&payload); err != nil {
@@ -71,20 +70,32 @@ func handleCreateRun(w http.ResponseWriter, r *http.Request, oc ortController) {
 		return
 	}
 
+	ortRun, err := unstructuredToOrtRun(created, true)
+	if err != nil {
+		writeStatus(w, http.StatusInternalServerError, "GET,POST")
+		return
+	}
+
 	writeCorsHeaders(w, "GET,POST")
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 
 	encoder := json.NewEncoder(w)
-	if err := encoder.Encode(created); err != nil {
+	if err := encoder.Encode(ortRun); err != nil {
 		log.Println(err)
 	}
 }
 
 func handleListRuns(w http.ResponseWriter, oc ortController) {
 	runs, err := oc.listRuns()
-
 	if err != nil {
+		writeStatus(w, http.StatusInternalServerError, "GET")
+		return
+	}
+
+	ortRuns, err := unstructuredListToOrtRunList(runs)
+	if err != nil {
+		log.Println(err)
 		writeStatus(w, http.StatusInternalServerError, "GET")
 		return
 	}
@@ -93,7 +104,7 @@ func handleListRuns(w http.ResponseWriter, oc ortController) {
 	w.Header().Add("Content-Type", "application/json")
 
 	encoder := json.NewEncoder(w)
-	if err := encoder.Encode(runs); err != nil {
+	if err := encoder.Encode(ortRuns); err != nil {
 		log.Println(err)
 	}
 }
@@ -127,11 +138,17 @@ func handleGetRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ortRun, err := unstructuredToOrtRun(run, true)
+	if err != nil {
+		writeStatus(w, http.StatusInternalServerError, "GET")
+		return
+	}
+
 	writeCorsHeaders(w, "GET")
 	w.Header().Add("Content-Type", "application/json")
 
 	encoder := json.NewEncoder(w)
-	if err := encoder.Encode(run); err != nil {
+	if err := encoder.Encode(ortRun); err != nil {
 		log.Println(err)
 	}
 }
@@ -171,31 +188,28 @@ func handleLogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sb := strings.Builder{}
+	var podLogs []PodLogs
 
 	for _, pod := range pods {
-		sb.WriteString("--------------------------------------------------------------------------------------------\n")
-		sb.WriteString(fmt.Sprintf("Logs from pod '%s':\n", pod.Name))
-		sb.WriteString("--------------------------------------------------------------------------------------------\n")
-
 		logs, err := oc.getLogs(pod.Name)
 		if err != nil {
 			writeStatus(w, http.StatusInternalServerError, "GET")
 			return
 		}
 
-		sb.WriteString(logs)
+		podLogs = append(podLogs, PodLogs{PodName: pod.Name, PodLogs: logs})
+	}
+
+	ortLogs := OrtLogs{
+		RunName:  name,
+		RunStage: stage,
+		PodLogs:  podLogs,
 	}
 
 	writeCorsHeaders(w, "GET")
-	w.Header().Add("Content-Type", "text/plain")
-
-	logs := sb.String()
-	if logs == "" {
-		logs = "already gone :(\n"
-	}
-
-	if _, err := w.Write([]byte(logs)); err != nil {
+	w.Header().Add("Content-Type", "application/json")
+	encoder := json.NewEncoder(w)
+	if err := encoder.Encode(ortLogs); err != nil {
 		log.Println(err)
 	}
 }
