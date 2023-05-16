@@ -36,6 +36,7 @@ func handleRuns(w http.ResponseWriter, r *http.Request) {
 
 	oc, err := newOrtController()
 	if err != nil {
+		log.Printf("handleRuns: %v\n", err)
 		writeStatus(w, http.StatusInternalServerError, "GET,POST")
 		return
 	}
@@ -66,12 +67,14 @@ func handleCreateRun(w http.ResponseWriter, r *http.Request, oc ortController) {
 
 	created, err := oc.createRun(payload.RepoUrl)
 	if err != nil {
+		log.Printf("handleCreateRun: oc.createRun: %v\n", err)
 		writeStatus(w, http.StatusInternalServerError, "GET,POST")
 		return
 	}
 
 	ortRun, err := unstructuredToOrtRun(created, true)
 	if err != nil {
+		log.Printf("handleCreateRun: unstructuredToOrtRun: %v\n", err)
 		writeStatus(w, http.StatusInternalServerError, "GET,POST")
 		return
 	}
@@ -82,20 +85,21 @@ func handleCreateRun(w http.ResponseWriter, r *http.Request, oc ortController) {
 
 	encoder := json.NewEncoder(w)
 	if err := encoder.Encode(ortRun); err != nil {
-		log.Println(err)
+		log.Printf("handleCreateRun: encoder.Encode: %v\n", err)
 	}
 }
 
 func handleListRuns(w http.ResponseWriter, oc ortController) {
 	runs, err := oc.listRuns()
 	if err != nil {
+		log.Printf("handleListRuns: oc.listRuns: %v\n", err)
 		writeStatus(w, http.StatusInternalServerError, "GET")
 		return
 	}
 
 	ortRuns, err := unstructuredListToOrtRunList(runs)
 	if err != nil {
-		log.Println(err)
+		log.Printf("handleListRuns: unstructuredListToOrtRunList: %v\n", err)
 		writeStatus(w, http.StatusInternalServerError, "GET")
 		return
 	}
@@ -105,7 +109,7 @@ func handleListRuns(w http.ResponseWriter, oc ortController) {
 
 	encoder := json.NewEncoder(w)
 	if err := encoder.Encode(ortRuns); err != nil {
-		log.Println(err)
+		log.Printf("handleCreateRun: encoder.Encode: %v\n", err)
 	}
 }
 
@@ -122,6 +126,7 @@ func handleGetRun(w http.ResponseWriter, r *http.Request) {
 
 	oc, err := newOrtController()
 	if err != nil {
+		log.Printf("handleGetRun: newOrtController: %v\n", err)
 		writeStatus(w, http.StatusInternalServerError, "GET")
 		return
 	}
@@ -134,12 +139,14 @@ func handleGetRun(w http.ResponseWriter, r *http.Request) {
 
 	run, err := oc.getRun(name)
 	if err != nil {
+		log.Printf("handleGetRun: oc.getRun: %v\n", err)
 		writeStatus(w, http.StatusInternalServerError, "GET")
 		return
 	}
 
 	ortRun, err := unstructuredToOrtRun(run, true)
 	if err != nil {
+		log.Printf("handleGetRun: unstructuredToOrtRun: %v\n", err)
 		writeStatus(w, http.StatusInternalServerError, "GET")
 		return
 	}
@@ -149,7 +156,7 @@ func handleGetRun(w http.ResponseWriter, r *http.Request) {
 
 	encoder := json.NewEncoder(w)
 	if err := encoder.Encode(ortRun); err != nil {
-		log.Println(err)
+		log.Printf("handleGetRun: encoder.Encode: %v\n", err)
 	}
 }
 
@@ -178,12 +185,14 @@ func handleLogs(w http.ResponseWriter, r *http.Request) {
 
 	oc, err := newOrtController()
 	if err != nil {
+		log.Printf("handleLogs: newOrtController: %v\n", err)
 		writeStatus(w, http.StatusInternalServerError, "GET")
 		return
 	}
 
 	pods, err := oc.listPods(name, stage)
 	if err != nil {
+		log.Printf("handleLogs: oc.listPods: %v\n", err)
 		writeStatus(w, http.StatusInternalServerError, "GET")
 		return
 	}
@@ -193,6 +202,7 @@ func handleLogs(w http.ResponseWriter, r *http.Request) {
 	for _, pod := range pods {
 		logs, err := oc.getLogs(pod.Name)
 		if err != nil {
+			log.Printf("handleLogs: oc.getLogs(\"%s\"): %v\n", pod.Name, err)
 			writeStatus(w, http.StatusInternalServerError, "GET")
 			return
 		}
@@ -210,7 +220,7 @@ func handleLogs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
 	if err := encoder.Encode(ortLogs); err != nil {
-		log.Println(err)
+		log.Printf("handleLogs: encoder.Encode: %v\n", err)
 	}
 }
 
