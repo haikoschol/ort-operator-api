@@ -59,9 +59,12 @@ func runListToHtml(unstructuredRuns *unstructured.UnstructuredList) (string, err
 		sb.WriteString("<tr>")
 
 		repoUrl := fmt.Sprintf(`<a href="%s">%s</a>`, run.repoUrl, run.repoUrl)
+		reportUrl := "n/a"
 
-		reportUrl := fmt.Sprintf("https://ortruns.inocybe.io/%s", run.name)
-		reportUrl = fmt.Sprintf(`<a href="%s">%s</a>`, reportUrl, reportUrl)
+		if run.reporterStatus == Succeeded.String() {
+			reportUrl = fmt.Sprintf("https://ortruns.inocybe.io/%s", run.name)
+			reportUrl = fmt.Sprintf(`<a href="%s">%s</a>`, reportUrl, reportUrl)
+		}
 
 		sb.WriteString(fmt.Sprintf("<td>%s</td>", run.name))
 		sb.WriteString(fmt.Sprintf("<td>%s</td>", repoUrl))
